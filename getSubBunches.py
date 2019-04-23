@@ -4,6 +4,7 @@ import numpy as np
 class Data:
     pass
 def getSubBunches(rgb,contours):
+    (B,G,R) = cv2.split(rgb)
     mask_len = len(contours)
     subBunch = [Data()]*mask_len
     for i in range(mask_len):
