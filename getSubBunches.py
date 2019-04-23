@@ -16,5 +16,6 @@ def getSubBunches(rgb,contours):
             if subBunch[i].mask[a][b] == 255:
                subBunch[i].mask[a][b] =1
        subBunch[i].rgb = rgb[int(subBunch[i].position[1]-1):int(subBunch[i].position[1]+subBunch[i].position[3]),int(subBunch[i].position[0]-1):int(subBunch[i].position[0]+subBunch[i].position[2])]
+    return subBunch
 
 
