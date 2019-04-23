@@ -55,7 +55,6 @@ def imagePreProcessing(rgb,color):
           if area < 2000:
               cv2.drawContours(iopen,[contours[i]],-1,0,-1)
        contours,hierarch=cv2.findContours(iopen,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-       cv2.imwrite('test.jpg',iopen)
     elif color == 'g':
        lab = cv2.cvtColor(rgb, cv2.COLOR_BGR2LAB)
        bunch_b = lab[:, :, 2]
