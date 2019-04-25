@@ -14,6 +14,10 @@ def getSubBunches(rgb,contours):
        cv2.drawContours(subBunch[i].mask,[contours[i]],-1,(255,255,255),-1)
        subBunch[i].mask = subBunch[i].mask[int(subBunch[i].position[1]-1):int(subBunch[i].position[1]+subBunch[i].position[3]),int(subBunch[i].position[0]-1):int(subBunch[i].position[0]+subBunch[i].position[2])]
        subBunch[i].rgb = rgb[int(subBunch[i].position[1]-1):int(subBunch[i].position[1]+subBunch[i].position[3]),int(subBunch[i].position[0]-1):int(subBunch[i].position[0]+subBunch[i].position[2])]
+       for a in range(subBunch[i].mask.shape[0]):
+          for b in range(subBunch[i].mask.shape[1]):
+            if subBunch[i].mask[a][b] == 255:
+               subBunch[i].mask[a][b] =1
     return subBunch
 
 

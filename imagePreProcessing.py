@@ -65,7 +65,6 @@ def imagePreProcessing(rgb,color):
        bunch_l = lab[:, :, 0]
        ret,thresh = cv2.threshold(bunch_l,0.2*255,255,cv2.THRESH_BINARY)
        bw = bw*thresh
-
        contours,hierarch=cv2.findContours(bw,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
        for i in range(len(contours)):
           area = cv2.contourArea(contours[i])

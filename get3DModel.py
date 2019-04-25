@@ -49,10 +49,10 @@ def get3DModel(subBunches,color):
        data[:,:,2] = mask
        mask1 = data.astype(np.uint8)
        rgb = rgb*mask1
-       bw_bunch_s = imutils.rotate_bound(subBunches.bw_bunch_s, -(90-subBunches.orientation))
+       bw_bunch_s = imutils.rotate_bound(subBunches.bw_bunch_s,-(90-subBunches.orientation))
     else:
-       mask = imutils.rotate_bound(subBunches.mask,-(90+subBunches.orientation))
-       rgb = imutils.rotate_bound(subBunches.rgb,-(90+subBunches.orientation))
+       mask = imutils.rotate(subBunches.mask,-(90+subBunches.orientation))
+       rgb = imutils.rotate(subBunches.rgb,-(90+subBunches.orientation))
        dim = mask.shape
        data = np.empty([dim[0],dim[1],3])
        data[:,:,0] = mask
@@ -60,7 +60,7 @@ def get3DModel(subBunches,color):
        data[:,:,2] = mask
        mask1 = data.astype(np.uint8)
        rgb = rgb*mask1
-       bw_bunch_s = imutils.rotate_bound(subBunches.bw_bunch_s, -(90-subBunches.orientation))
+       bw_bunch_s = imutils.rotate(subBunches.bw_bunch_s,-(90-subBunches.orientation))
     if color == 'p':
        hsv = cv2.cvtColor(rgb, cv2.COLOR_BGR2HSV)
        (h, s, v) = cv2.split(hsv)
@@ -72,7 +72,22 @@ def get3DModel(subBunches,color):
        bunch_b = lab[:, :, 2]
     else:
        print('wrong color!')
-    mask = image = np.array(mask,np.uint8)
+    mask = np.array(mask,np.uint8)
     contours,hierarch=cv2.findContours(mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-    cv2.imwrite('test3.jpg',mask)
+    for i in range(len(contours)):
+          area = cv2.contourArea(contours[i])
+          if area < 1000:
+              cv2.drawContours(mask,[contours[i]],-1,0,-1)
+    contours,hierarch=cv2.findContours(mask,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
+    d = np.empty(len(contours))
+    for i in range(len(contours)):
+       d[i] = len(contours[i])
+    s = np.shape(mask)
+    max_d = max(d)
+    h = np.argmax(d)
+    boundmax = contours[h]
+    Bw = np.zeros(s)
+    cv2.drawContours(Bw,[contours[h]],-1,(255,255,255),1)
+    print(max(boundmax[:,:,0]),s)
+    cv2.imwrite('test3.jpg',Bw)
 get3DModel(subBunches[0],color)
