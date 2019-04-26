@@ -4,9 +4,10 @@ import random
 import imutils
 import imagePreProcessing
 import getSubBunches
+import getRadiusRangeManual
 from imagePreProcessing import imagePreProcessing
 from getSubBunches import getSubBunches
-
+from getRadiusRangeManual import getRadiusRangeManual
 color = 'g'
 rgb = cv2.imread('4.jpg')
 contours = imagePreProcessing(rgb,color)
@@ -88,6 +89,7 @@ def get3DModel(subBunches,color):
     boundmax = contours[h]
     Bw = np.zeros(s)
     cv2.drawContours(Bw,[contours[h]],-1,(255,255,255),1)
-    print(max(boundmax[:,:,0]),s)
+    rangeR = getRadiusRangeManual(rgb)
+    print(rangeR)
     cv2.imwrite('test3.jpg',Bw)
 get3DModel(subBunches[0],color)
