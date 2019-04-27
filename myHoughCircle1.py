@@ -43,7 +43,6 @@ def get3DModel(subBunches,color):
     if subBunches.orientation > 90:
        mask = imutils.rotate_bound(subBunches.mask,-(180-subBunches.orientation))
        rgb = imutils.rotate_bound(subBunches.rgb,-(180-subBunches.orientation))
-       print(subBunches.orientation)
        dim = mask.shape
        data = np.empty([dim[0],dim[1],3])
        data[:,:,0] = mask
@@ -55,7 +54,6 @@ def get3DModel(subBunches,color):
     else:
        mask = imutils.rotate(subBunches.mask,-(90-subBunches.orientation))
        rgb = imutils.rotate(subBunches.rgb,-(90-subBunches.orientation))
-       print(subBunches.orientation)
        dim = mask.shape
        data = np.empty([dim[0],dim[1],3])
        data[:,:,0] = mask
@@ -91,12 +89,21 @@ def get3DModel(subBunches,color):
     boundmax = contours[h]
     Bw = np.zeros(s,dtype=np.uint8)
     cv2.drawContours(Bw,[contours[h]],-1,(255,255,255),1)
-    cv2.imwrite('test5.jpg',mask)
     rangeR = getRadiusRangeManual(rgb)
+    print(rangeR)
     sensitivity = 0.98
     edgeThreshold = 0.2*255
-    existing_berries =[]
-    newBerries_atEdge = []
-    visibleBerries =[]
-    return existing_berries,newBerries_atEdge,visibleBerries
+    method = 'PhaseCode'
+    objectPolarity = 'bright' 
+    cv2.imwrite('test5.jpg',Bw) 
+#def myHoughCircle1(image, iclose, rangeR,method, sensitivity, edgeThreshold,objectPolarity):
+    circles1= cv2.HoughCircles(Bw,cv2.HOUGH_GRADIENT,1,int(1.5*min(rangeR)),param1=int(edgeThreshold),param2=1,minRadius=int(min(rangeR)),maxRadius=int(max(rangeR)))
+    circles = circles1[0,:,:]
+    circles = np.uint16(np.around(circles)) 
+    img = cv2.imread('test5.jpg')
+    for i in circles[:]:
+        cv2.circle(img,(i[0],i[1]),i[2],(0,255,0),2)
+    cv2.imwrite("planets_circles.jpg", img)
+    print(circles)
+
 get3DModel(subBunches[0],color)

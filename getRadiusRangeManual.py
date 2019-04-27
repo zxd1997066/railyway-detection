@@ -22,7 +22,7 @@ def getRadiusRangeManual(rgb):
     data1=data.reshape(1,1,4)
     for i in range(0,data1.shape[0]):
       for x1,y1,x2,y2 in data1[i]:
-        R = ((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))**0.5
+        R = (((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))**0.5)/2
     rangeR = range(int(R),int(R+10))
     return rangeR
 
