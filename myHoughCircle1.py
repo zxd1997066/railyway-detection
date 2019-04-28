@@ -47,8 +47,6 @@ def myHoughCircle1(image,iclose,rangeR,sensitivity,edgeThreshold):
   #print (centers_x,centers_y,radii)
   return centers_x,centers_y,radii
 
-        #cv2.circle(img,(i[0],i[1]),i[2],(0,255,0),2)
-    #cv2.imwrite("planets_circles.jpg", img)
-
+        
 
 
