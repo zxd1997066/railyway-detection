@@ -1,109 +1,54 @@
 import cv2
 import numpy as np
-import random
-import imutils
-import imagePreProcessing
-import getSubBunches
-import getRadiusRangeManual
-from imagePreProcessing import imagePreProcessing
-from getSubBunches import getSubBunches
-from getRadiusRangeManual import getRadiusRangeManual
-color = 'p'
-rgb = cv2.imread('6.jpg')
-contours = imagePreProcessing(rgb,color)
-subBunches = getSubBunches(rgb,contours)
-def getSparseFactor(mask,bw,color):
-    ret, th = cv2.threshold(bw, 0, 255, cv2.THRESH_OTSU)
-    threshLevel = ret
-    if color == 'p':
-       bw_bunch_s = ~th
-    elif color == 'g':
-       bw_bunch_s = th
-    else:
-       print('wrong color!')
-    sf = np.sum(bw_bunch_s)/np.sum(mask)
-    return sf,bw_bunch_s
-######################################
-def get3DModel(subBunches,color):
-    for i in range(1):
-       if color == 'p':
-          HSV = subBunches.rgb
-          (h, s, v) = cv2.split(subBunches.rgb)
-          bw = h
-       elif color == 'g':
-          lab = cv2.cvtColor(subBunches.rgb, cv2.COLOR_BGR2LAB)
-          bw = lab[:, :, 2]
-       else:
-          print('wrong color!')
-       sf,bw_bunch_s = getSparseFactor(subBunches.mask,bw,color)
-       subBunches.sf = sf
-       subBunches.bw_bunch_s = bw_bunch_s
-##########################################
-    random.seed()
-    if subBunches.orientation > 90:
-       mask = imutils.rotate_bound(subBunches.mask,-(180-subBunches.orientation))
-       rgb = imutils.rotate_bound(subBunches.rgb,-(180-subBunches.orientation))
-       dim = mask.shape
-       data = np.empty([dim[0],dim[1],3])
-       data[:,:,0] = mask
-       data[:,:,1] = mask
-       data[:,:,2] = mask
-       mask1 = data.astype(np.uint8)
-       rgb = rgb*mask1
-       bw_bunch_s = imutils.rotate_bound(subBunches.bw_bunch_s,-(180-subBunches.orientation))
-    else:
-       mask = imutils.rotate(subBunches.mask,-(90-subBunches.orientation))
-       rgb = imutils.rotate(subBunches.rgb,-(90-subBunches.orientation))
-       dim = mask.shape
-       data = np.empty([dim[0],dim[1],3])
-       data[:,:,0] = mask
-       data[:,:,1] = mask
-       data[:,:,2] = mask
-       mask1 = data.astype(np.uint8)
-       rgb = rgb*mask1
-       bw_bunch_s = imutils.rotate(subBunches.bw_bunch_s,-(90-subBunches.orientation))
-    if color == 'p':
-       hsv = cv2.cvtColor(rgb, cv2.COLOR_BGR2HSV)
-       (h, s, v) = cv2.split(hsv)
-       channel = v
-    elif color == 'g':
-       (B,G,R) = cv2.split(rgb)
-       channel = G
-       lab = cv2.cvtColor(rgb, cv2.COLOR_BGR2LAB)
-       bunch_b = lab[:, :, 2]
-    else:
-       print('wrong color!')
-    mask = np.array(mask,np.uint8)
-    contours,hierarch=cv2.findContours(mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-    for i in range(len(contours)):
-          area = cv2.contourArea(contours[i])
-          if area < 1000:
-              cv2.drawContours(mask,[contours[i]],-1,0,-1)
-    contours,hierarch=cv2.findContours(mask,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
-    d = np.empty(len(contours))
-    for i in range(len(contours)):
-       d[i] = len(contours[i])
-    s = np.shape(mask)
-    max_d = max(d)
-    h = np.argmax(d)
-    boundmax = contours[h]
-    Bw = np.zeros(s,dtype=np.uint8)
-    cv2.drawContours(Bw,[contours[h]],-1,(255,255,255),1)
-    rangeR = getRadiusRangeManual(rgb)
-    print(rangeR)
-    sensitivity = 0.98
-    edgeThreshold = 0.2*255
-    method = 'PhaseCode'
-    objectPolarity = 'bright' 
-    cv2.imwrite('test5.jpg',Bw) 
-#def myHoughCircle1(image, iclose, rangeR,method, sensitivity, edgeThreshold,objectPolarity):
-    circles1= cv2.HoughCircles(Bw,cv2.HOUGH_GRADIENT,1,int(1.5*min(rangeR)),param1=int(edgeThreshold),param2=1,minRadius=int(min(rangeR)),maxRadius=int(max(rangeR)))
-    circles = circles1[0,:,:]
-    circles = np.uint16(np.around(circles)) 
-    img = cv2.imread('test5.jpg')
-    for i in circles[:]:
-        cv2.circle(img,(i[0],i[1]),i[2],(0,255,0),2)
-    cv2.imwrite("planets_circles.jpg", img)
-    print(circles)
 
-get3DModel(subBunches[0],color)
+def myHoughCircle1(image,iclose,rangeR,sensitivity,edgeThreshold):
+  try:
+    circles1= cv2.HoughCircles(image,cv2.HOUGH_GRADIENT,1,int(sensitivity*min(rangeR)),param1=int(edgeThreshold),param2=7,minRadius=int(min(rangeR)),maxRadius=int(max(rangeR)))
+    circles = np.single(np.around(circles1))
+    cx = np.empty(0)
+    cy = np.empty(0)
+    r = np.empty(0)
+    img = cv2.imread('test5.jpg')
+    for i in circles1[0,:,:]:
+        cx = np.append(cx,i[0])
+        cy = np.append(cy,i[1])
+        r = np.append(r,i[2])
+    r_max = max(r)
+    r_min = np.mean(r) + np.std(r, ddof = 1)*0.5
+    newRangeR = range(int(r_min),int(r_max))
+    centers_x = np.empty(0)
+    centers_y = np.empty(0)
+    radii = np.empty(0)
+    for i in circles1[0,:,:]:
+        if i[2] >= r_min and i[2] <= r_max:
+           centers_x = np.append(centers_x,i[0])
+           centers_y = np.append(centers_y,i[1])
+           radii = np.append(radii,i[2])
+    circle_number = len(radii)
+    minDistance = int(r_min)
+    circles2= cv2.HoughCircles(image,cv2.HOUGH_GRADIENT,1,minDistance,param1=int(edgeThreshold),param2=7,minRadius=int(r_min),maxRadius=int(r_max))
+    cx = np.empty(0)
+    cy = np.empty(0)
+    r = np.empty(0)
+    for i in circles1[0,:,:]:
+        cx = np.append(cx,i[0])
+        cy = np.append(cy,i[1])
+        r = np.append(r,i[2])
+        #cv2.circle(img,(i[0],i[1]),i[2],(0,255,0),2)
+    #cv2.imwrite("test7.jpg", img)
+    centers_x = cx
+    centers_y = cy
+    radii = r
+  except: 
+    centers_x =[]
+    centers_y =[]
+    radii = []
+    newRangeR =[]
+  #print (centers_x,centers_y,radii)
+  return centers_x,centers_y,radii
+
+        #cv2.circle(img,(i[0],i[1]),i[2],(0,255,0),2)
+    #cv2.imwrite("planets_circles.jpg", img)
+
+
+

@@ -5,6 +5,8 @@ import imutils
 import imagePreProcessing
 import getSubBunches
 import getRadiusRangeManual
+import myHoughCircle1
+from myHoughCircle1 import myHoughCircle1
 from imagePreProcessing import imagePreProcessing
 from getSubBunches import getSubBunches
 from getRadiusRangeManual import getRadiusRangeManual
@@ -95,6 +97,7 @@ def get3DModel(subBunches,color):
     rangeR = getRadiusRangeManual(rgb)
     sensitivity = 0.98
     edgeThreshold = 0.2*255
+    centers_x,centers_y,radii = myHoughCircle1(Bw,mask,rangeR,sensitivity,edgeThreshold)
     existing_berries =[]
     newBerries_atEdge = []
     visibleBerries =[]
