@@ -155,6 +155,16 @@ def get3DModel(subBunches,color):
                   idx = group == currentGroups[j]
                   group[idx] = groupNo
               mark = True
-              
+       newBerries_atEdge = []
+       for i in range(max(group)[0]):
+           index = np.where(group == i)
+           tmp_centers_x = centers_x[index]
+           tmp_centers_y = centers_y[index]
+           tmp_radii = radii[index]
+           tmp_centers_x = np.sort(tmp_centers_x)
+           tmp_centers_y = np.sort(tmp_centers_y) 
+           tmp_radii = np.sort(tmp_radii) 
+           if len(tmp_radii)%2 ==1:
+               middle_berry_idx = int(len(tmp_radii)/2)   
     #return existing_berries,newBerries_atEdge,visibleBerries
 get3DModel(subBunches[0],color)
