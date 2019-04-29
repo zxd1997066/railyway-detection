@@ -98,8 +98,63 @@ def get3DModel(subBunches,color):
     sensitivity = 0.98
     edgeThreshold = 0.2*255
     centers_x,centers_y,radii = myHoughCircle1(Bw,mask,rangeR,sensitivity,edgeThreshold)
-    existing_berries =[]
-    newBerries_atEdge = []
-    visibleBerries =[]
-    return existing_berries,newBerries_atEdge,visibleBerries
+
+    if len(radii) == 0:
+       existing_berries =[]
+       newBerries_atEdge = []
+       visibleBerries =[]
+    else:
+       Q1 = np.percentile(radii,25)
+       Q3 = np.percentile(radii,75)
+       Spread = 1.5*(Q3-Q1)
+       MaxValue = Q3 + Spread
+       MinValue = Q1 - Spread
+       index = np.where((MinValue<radii)&(radii<MaxValue))
+       centers_x = centers_x[index]
+       centers_y = centers_y[index]
+       radii = radii[index]
+       newRangeR = range(int(min(radii)),int(max(radii)))
+       len_rd = len(radii)
+       a = centers_x
+       b = centers_y
+       c = np.zeros(len_rd,dtype=np.uint8)
+       r = radii
+       max_rd = max(radii)
+       min_rd = min(radii)
+       candidates = np.ones((len_rd,1),dtype=np.uint8)
+       group = np.zeros((len_rd,1),dtype=np.uint8)
+       tolerance = 9
+       step_move = 0.5
+       step_radii = 0.01
+       groupNo = 1
+       mark = False
+       for i in range(len_rd):
+           if group[i] == 0 and mark:
+              groupNo = max(group) + 1
+           elif group[i] > 0:
+              groupNo = group[i]
+           mark = False
+           a[:] = a[:]-a[i]
+           b[:] = b[:]-b[i]
+           r[:] = r[:]-r[i]
+           distance = (a*a+b*b+r*r)**0.5
+           a = centers_x
+           b = centers_y
+           r = radii
+           index = (distance > 0) & (distance < (r[i] + r - tolerance))
+           index = index.astype(int)
+           if np.sum(index)>0:
+              currentGroups = group[index]
+              index1 = np.where(currentGroups == 0)
+              currentGroups[index1] = []
+              if np.sum(group[index])>0:
+                 groupNo = min([groupNo, currentGroups])
+              group[i] = groupNo
+              group[index] = groupNo
+              for j in range(leng(currentGroups)):
+                  idx = group == currentGroups[j]
+                  group[idx] = groupNo
+              mark = True
+              
+    #return existing_berries,newBerries_atEdge,visibleBerries
 get3DModel(subBunches[0],color)
