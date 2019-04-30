@@ -34,8 +34,8 @@ def myHoughCircle1(image,iclose,rangeR,sensitivity,edgeThreshold):
         cx = np.append(cx,i[0])
         cy = np.append(cy,i[1])
         r = np.append(r,i[2])
-        #cv2.circle(img,(i[0],i[1]),i[2],(0,255,0),2)
-    #cv2.imwrite("test7.jpg", img)
+        cv2.circle(img,(i[0],i[1]),i[2],(0,255,0),2)
+    cv2.imwrite("test8.jpg", img)
     centers_x = cx
     centers_y = cy
     radii = r
@@ -46,7 +46,5 @@ def myHoughCircle1(image,iclose,rangeR,sensitivity,edgeThreshold):
     newRangeR =[]
   #print (centers_x,centers_y,radii)
   return centers_x,centers_y,radii
-
-        
 
 
