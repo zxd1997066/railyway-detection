@@ -202,8 +202,7 @@ def get3DModel(subBunches,color):
        Vradii1 = Vradii.reshape((-1,1))
        visibleBerries = np.empty((len(Vradii),5),dtype=np.uint8)
        visibleBerries = np.hstack((Vcenters_x1,Vcenters_y1,np.zeros((len(Vradii),1),dtype=np.uint8),Vradii1))
-       candidates =  np.ones((len(Vradii),1),dtype=bool)
-      
+       candidates =  np.ones((len(Vradii),1),dtype=np.uint8)
        for i in range(len(Vradii)):
            distance = ((visibleBerries[i, 0] - centers[:,0])*(visibleBerries[i, 0] - centers[:,0])+(visibleBerries[i, 1] - centers[:,1])*(visibleBerries[i, 1] - centers[:,1]))**0.5
        #visibleBerries = [Vcenters_x,Vcenters_y,np.zeros((len(Vradii),1),dtype=np.uint8),Vradii]
@@ -211,5 +210,35 @@ def get3DModel(subBunches,color):
            index = np.where((distance > 0)&(distance < visibleBerries[i, 3]))
            if np.sum(index)>0:
               candidates[i] = 0
+       index = np.where(candidates==0)
+       visibleBerries=np.delete(visibleBerries,index,0)
+
+
+    contours,hierarch=cv2.findContours(mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+    parts = np.ones((mask.shape[0],1),dtype=np.uint8)
+    bunch_ratio = 5/6
+    x,y,w,h = cv2.boundingRect(contours[0])
+    thres = w/h*h+y
+    parts[1:int(thres)] = 0
+    if len(Vradii)==0:
+       existing_berries = newBerries_atEdge
+    else:
+       existing_berries = newBerries_atEdge
+       print(existing_berries)
+       for i in range(visibleBerries.shape[0]):
+           center_x = visibleBerries[i, 0]
+           center_y = visibleBerries[i, 1]
+           idx = np.where(mask[int(center_y),:]==1)
+           majorAxis = (max(idx[0]) - min(idx[0]) + 1)/2
+           track_center = np.hstack((majorAxis+min(min(idx)), center_y, 0))
+           if parts[int(center_y)] == 0:
+              minorAxis = bunch_ratio*majorAxis
+              visibleBerries[i, 2] = (abs((1-(center_x - track_center[0])**2/(majorAxis - visibleBerries[i,3])**2)*(minorAxis - visibleBerries[i,3])**2))**0.5+track_center[2]
+           else:
+              track_radius = majorAxis - visibleBerries[i,3]
+              visibleBerries[i,3] = (abs(track_radius**2 - (center_x - track_center[0])**2))**0.5+track_center[2]
+           while 1:
+              distance = ((visibleBerries[i,0] - existing_berries[:,0])**2+(visibleBerries[i,1] - existing_berries[:,1])**2+(visibleBerries[i, 2] - existing_berries[:,2])**2)**0.5
+              index = np.where((distance > 0)&(distance < (visibleBerries[i, 3] + existing_berries[:, 3] - tolerance)))
     #return existing_berries,newBerries_atEdge,visibleBerries
 get3DModel(subBunches[0],color)
