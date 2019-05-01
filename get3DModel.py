@@ -7,11 +7,13 @@ import getSubBunches
 import getRadiusRangeManual
 import myHoughCircle1
 import myHoughCircle2
+import math
 from myHoughCircle1 import myHoughCircle1
 from myHoughCircle2 import myHoughCircle2
 from imagePreProcessing import imagePreProcessing
 from getSubBunches import getSubBunches
 from getRadiusRangeManual import getRadiusRangeManual
+from scipy import stats
 color = 'p'
 rgb = cv2.imread('6.jpg')
 contours = imagePreProcessing(rgb,color)
@@ -175,16 +177,25 @@ def get3DModel(subBunches,color):
    
            for j in range(len(tmp_radii)):
               if j != middle_berry_idx:
-                 tmp_berries = [tmp_centers_x[candidates],tmp_centers_y[candidates],tmp_radii[candidates]]
+                 tmp_berries = np.hstack((tmp_centers_x[candidates],tmp_centers_y[candidates],tmp_radii[candidates]))
                  while 1:
                      
                      distance = (((group_berries[j, 1] - tmp_berries[:,1])*(group_berries[j, 1] - tmp_berries[:,1])+(group_berries[j, 2]
                      - tmp_berries[:,2])*(group_berries[j, 2] - tmp_berries[:,2])
                      +(group_berries[j, 3] - tmp_berries[:,3])*(group_berries[j, 3] - tmp_berries[:,3]))**0.5)
-                     index2 = (distance > 0)&(distance < (group_berries[j, 4] + tmp_berries[:, 4] - tolerance))
+                     index2 = np.where((distance > 0)&(distance < (group_berries[j, 4] + tmp_berries[:, 4] - tolerance)))
                      if np.sum(index2)==0:
                         candidates[j] = 1
-           newBerries_atEdge = [[newBerries_atEdge],[tmp_centers_x,tmp_centers_y,tmp_radii]]
+           #newBerries_atEdge = np.array(newBerries_atEdge)
+           #newBerries_atEdge = newBerries_atEdge.reshape((-1,1)) 
+              newBerries_atEdge = np.vstack((newBerries_atEdge,group_berries))
+    index=np.where(group==0)
+    centers_x=centers_x.reshape((-1,1))
+    centers_y=centers_y.reshape((-1,1))
+    tmp_centers = np.hstack((centers_x[index],centers_y[index],np.zeros((centers_y[index].shape[0],1),dtype=np.uint8)))
+    tmp_radii = radii[index]
+    new1 = np.hstack((tmp_centers_x, tmp_centers_y,tmp_radii))
+    newBerries_atEdge = np.vstack((newBerries_atEdge,new1))
     sensitivity = 0.99 
     edgeThreshold = 0.1*255
     newRangeR = rangeR
@@ -224,7 +235,8 @@ def get3DModel(subBunches,color):
        existing_berries = newBerries_atEdge
     else:
        existing_berries = newBerries_atEdge
-       print(existing_berries)
+       if np.sum(existing_berries)==0:
+          existing_berries=np.zeros((0,4),dtype=np.uint8)
        for i in range(visibleBerries.shape[0]):
            center_x = visibleBerries[i, 0]
            center_y = visibleBerries[i, 1]
@@ -233,12 +245,42 @@ def get3DModel(subBunches,color):
            track_center = np.hstack((majorAxis+min(min(idx)), center_y, 0))
            if parts[int(center_y)] == 0:
               minorAxis = bunch_ratio*majorAxis
-              visibleBerries[i, 2] = (abs((1-(center_x - track_center[0])**2/(majorAxis - visibleBerries[i,3])**2)*(minorAxis - visibleBerries[i,3])**2))**0.5+track_center[2]
+              visibleBerries[i, 2] = (abs((1 - (center_x - track_center[0])**2/(majorAxis - visibleBerries[i,3])**2)*(minorAxis - visibleBerries[i,3])**2))**0.5+ track_center[2]
            else:
               track_radius = majorAxis - visibleBerries[i,3]
-              visibleBerries[i,3] = (abs(track_radius**2 - (center_x - track_center[0])**2))**0.5+track_center[2]
+              visibleBerries[i,2] = (abs(track_radius**2 - (center_x - track_center[0])**2))**0.5+track_center[2]
            while 1:
               distance = ((visibleBerries[i,0] - existing_berries[:,0])**2+(visibleBerries[i,1] - existing_berries[:,1])**2+(visibleBerries[i, 2] - existing_berries[:,2])**2)**0.5
               index = np.where((distance > 0)&(distance < (visibleBerries[i, 3] + existing_berries[:, 3] - tolerance)))
+              if np.sum(index)>0:
+                 visibleBerries[i, 2] = visibleBerries[i, 2] - step_move
+                 visibleBerries[i, 3] = visibleBerries[i, 3]
+              elif np.sum(index) == 0:
+                 break
+           existing_berries = np.vstack((existing_berries,visibleBerries[i, :]))
+    if np.sum(existing_berries)==0:
+       existing_berries =[]
+       newBerries_atEdge = []
+       visibleBerries =[]
+    else:
+       muhat = existing_berries[:, 3].mean()
+       sigmahat = existing_berries[:, 3].std(ddof=1)
+       muci = stats.norm.interval(0.95, loc=muhat, scale=sigmahat)
+       for i in range(int(y)+5,int(y+h)-5,2):
+          idx = np.where(mask[int(i),:]==1)
+          majorAxis = (max(idx[0]) - min(idx[0]) + 1)/2
+          track_center = np.hstack(((majorAxis+min(idx[0])), i, 0))
+          if parts[i] ==0:
+             minorAxis = bunch_ratio*majorAxis
+             the1=[i for i in range(1,180)]
+             the2=[i for i in range(181,360)]
+             the1=np.append(the1,the2)
+             dd = float("inf")
+             for theta in the1:
+                 if muci != np.inf:
+                    tmp_radius =random.random()*(muci[1]-muci[0])+ muhat
+                 else:
+                    tmp_radius = muhat
+                 tmp_fill_berry[0] = track_center[0] + (majorAxis - tmp_radius)*math.cos(theta/180*math.pi)
     #return existing_berries,newBerries_atEdge,visibleBerries
 get3DModel(subBunches[0],color)
