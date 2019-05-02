@@ -16,37 +16,9 @@ from imagePreProcessing import imagePreProcessing
 from getSubBunches import getSubBunches
 from getRadiusRangeManual import getRadiusRangeManual
 from scipy import stats
-color = 'p'
-rgb = cv2.imread('6.jpg')
-contours = imagePreProcessing(rgb,color)
-subBunches = getSubBunches(rgb,contours)
-def getSparseFactor(mask,bw,color):
-    ret, th = cv2.threshold(bw, 0, 255, cv2.THRESH_OTSU)
-    threshLevel = ret
-    if color == 'p':
-       bw_bunch_s = ~th
-    elif color == 'g':
-       bw_bunch_s = th
-    else:
-       print('wrong color!')
-    sf = np.sum(bw_bunch_s)/np.sum(mask)
-    return sf,bw_bunch_s
+
 ######################################
 def get3DModel(subBunches,color):
-    for i in range(1):
-       if color == 'p':
-          HSV = subBunches.rgb
-          (h, s, v) = cv2.split(subBunches.rgb)
-          bw = h
-       elif color == 'g':
-          lab = cv2.cvtColor(subBunches.rgb, cv2.COLOR_BGR2LAB)
-          bw = lab[:, :, 2]
-       else:
-          print('wrong color!')
-       sf,bw_bunch_s = getSparseFactor(subBunches.mask,bw,color)
-       subBunches.sf = sf
-       subBunches.bw_bunch_s = bw_bunch_s
-##########################################
     random.seed()
     if subBunches.orientation > 90:
        mask = imutils.rotate_bound(subBunches.mask,-(180-subBunches.orientation))
@@ -81,6 +53,10 @@ def get3DModel(subBunches,color):
        bunch_b = lab[:, :, 2]
     else:
        print('wrong color!')
+    for i in range(0,bw_bunch_s.shape[0]):
+       for j in range(0,bw_bunch_s.shape[1]):
+            if bw_bunch_s[i][j] == 255:
+               bw_bunch_s[i][j] =1
     mask = np.array(mask,np.uint8)
     contours,hierarch=cv2.findContours(mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
     for i in range(len(contours)):
@@ -191,166 +167,166 @@ def get3DModel(subBunches,color):
            #newBerries_atEdge = np.array(newBerries_atEdge)
            #newBerries_atEdge = newBerries_atEdge.reshape((-1,1)) 
               newBerries_atEdge = np.append(newBerries_atEdge,group_berries)
-    index=np.where(group==0)
-    centers_x=centers_x.reshape((-1,1))
-    centers_y=centers_y.reshape((-1,1))
-    tmp_centers = np.hstack((centers_x[index],centers_y[index],np.zeros((centers_y[index].shape[0],1),dtype=np.uint8)))
-    tmp_radii = radii[index]
-    new1 = np.hstack((tmp_centers_x, tmp_centers_y,tmp_radii))
-    newBerries_atEdge = np.vstack((newBerries_atEdge,new1))
-    sensitivity = 0.99 
-    edgeThreshold = 0.1*255
-    newRangeR = rangeR
-    centers_x1 = centers_x.reshape((-1,1))
-    centers_y1 = centers_y.reshape((-1,1))
-    centers = np.hstack((centers_x1,centers_y1))
-    cv2.imwrite('test5.jpg',mask)  
-  
-    Vcenters_x,Vcenters_y,Vradii = myHoughCircle2(channel,mask,newRangeR,sensitivity,edgeThreshold)
-    if len(Vradii) == 0:
-       visibleBerries = []
-    else:
-       Vcenters_x1 = Vcenters_x.reshape((-1,1))
-       Vcenters_y1 = Vcenters_y.reshape((-1,1))
-       Vradii1 = Vradii.reshape((-1,1))
-       visibleBerries = np.empty((len(Vradii),5),dtype=np.uint8)
-       visibleBerries = np.hstack((Vcenters_x1,Vcenters_y1,np.zeros((len(Vradii),1),dtype=np.uint8),Vradii1))
-       candidates =  np.ones((len(Vradii),1),dtype=np.uint8)
-       for i in range(len(Vradii)):
-           distance = ((visibleBerries[i, 0] - centers[:,0])*(visibleBerries[i, 0] - centers[:,0])+(visibleBerries[i, 1] - centers[:,1])*(visibleBerries[i, 1] - centers[:,1]))**0.5
+       index=np.where(group==0)
+       centers_x=centers_x.reshape((-1,1))
+       centers_y=centers_y.reshape((-1,1))
+       tmp_centers = np.hstack((centers_x[index],centers_y[index],np.zeros((centers_y[index].shape[0],1),dtype=np.uint8)))
+       tmp_radii = radii[index]
+       new1 = np.hstack((tmp_centers_x, tmp_centers_y,tmp_radii))
+       newBerries_atEdge = np.vstack((newBerries_atEdge,new1))
+       sensitivity = 0.99 
+       edgeThreshold = 0.1*255
+       newRangeR = rangeR
+       centers_x1 = centers_x.reshape((-1,1))
+       centers_y1 = centers_y.reshape((-1,1))
+       centers = np.hstack((centers_x1,centers_y1))
+       cv2.imwrite('test5.jpg',mask)  
+       Vcenters_x,Vcenters_y,Vradii = myHoughCircle2(channel,mask,newRangeR,sensitivity,edgeThreshold)
+       if len(Vradii) == 0:
+          visibleBerries = []
+       else:
+          Vcenters_x1 = Vcenters_x.reshape((-1,1))
+          Vcenters_y1 = Vcenters_y.reshape((-1,1))
+          Vradii1 = Vradii.reshape((-1,1))
+          visibleBerries = np.empty((len(Vradii),5),dtype=np.uint8)
+          visibleBerries = np.hstack((Vcenters_x1,Vcenters_y1,np.zeros((len(Vradii),1),dtype=np.uint8),Vradii1))
+          candidates =  np.ones((len(Vradii),1),dtype=np.uint8)
+          for i in range(len(Vradii)):
+              distance = ((visibleBerries[i, 0] - centers[:,0])*(visibleBerries[i, 0] - centers[:,0])+(visibleBerries[i, 1] - centers[:,1])*(visibleBerries[i, 1] - centers[:,1]))**0.5
        #visibleBerries = [Vcenters_x,Vcenters_y,np.zeros((len(Vradii),1),dtype=np.uint8),Vradii]
        #print(distance)
-           index = np.where((distance > 0)&(distance < visibleBerries[i, 3]))
-           if np.sum(index)>0:
-              candidates[i] = 0
-       index = np.where(candidates==0)
-       visibleBerries=np.delete(visibleBerries,index,0)
-
-
-    contours,hierarch=cv2.findContours(mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-    parts = np.ones((mask.shape[0],1),dtype=np.uint8)
-    bunch_ratio = 5/6
-    x,y,w,h = cv2.boundingRect(contours[0])
-    thres = w/h*h+y
-    parts[1:int(thres)] = 0
-    if len(Vradii)==0:
-       existing_berries = newBerries_atEdge
-    else:
-       existing_berries = newBerries_atEdge
-       ex=np.zeros(0,dtype=np.uint8)
-       if np.sum(existing_berries)==0:
-          existing_berries=np.zeros((0,4),dtype=np.uint8)
-       for i in range(visibleBerries.shape[0]):
-           center_x = visibleBerries[i, 0]
-           center_y = visibleBerries[i, 1]
-           idx = np.where(mask[int(center_y),:]==1)
-           majorAxis = (max(idx[0]) - min(idx[0]) + 1)/2
-           track_center = np.hstack((majorAxis+min(min(idx)), center_y, 0))
-           if parts[int(center_y)] == 0:
-              minorAxis = bunch_ratio*majorAxis
-              visibleBerries[i, 2] = (abs((1 - (center_x - track_center[0])**2/(majorAxis - visibleBerries[i,3])**2)*(minorAxis - visibleBerries[i,3])**2))**0.5+ track_center[2]
-           else:
-              track_radius = majorAxis - visibleBerries[i,3]
-              visibleBerries[i,2] = (abs(track_radius**2 - (center_x - track_center[0])**2))**0.5+track_center[2]
-           while 1:
-              distance = ((visibleBerries[i,0] - existing_berries[:,0])**2+(visibleBerries[i,1] - existing_berries[:,1])**2+(visibleBerries[i, 2] - existing_berries[:,2])**2)**0.5
-              index = np.where((distance > 0)&(distance < (visibleBerries[i, 3] + existing_berries[:, 3] - tolerance)))
+              index = np.where((distance > 0)&(distance < visibleBerries[i, 3]))
               if np.sum(index)>0:
-                 visibleBerries[i, 2] = visibleBerries[i, 2] - step_move
-                 visibleBerries[i, 3] = visibleBerries[i, 3]
-              elif np.sum(index) == 0:
-                 break
-           #visibleBerries[i, :] = visibleBerries[i, :].reshape(1,4)
-           ex = np.append(ex,visibleBerries[i, :],axis = 0)
-       ex = ex.reshape(-1,4)
-       existing_berries = np.vstack((existing_berries,ex))
-    if np.sum(existing_berries)==0:
-       existing_berries =[]
-       newBerries_atEdge = []
-       visibleBerries =[]
-    else:
-       muhat = existing_berries[:, 3].mean()
-       sigmahat = existing_berries[:, 3].std(ddof=1)
-       muci = stats.norm.interval(0.95, loc=muhat, scale=sigmahat)
-       for i in range(int(y)+5,int(y+h)-5,2):
-          ma=mask[i,:]
-          idx = np.where(ma==1)
-          majorAxis = (max(idx[0]) - min(idx[0]) + 1)/2
-          track_center = np.hstack(((majorAxis+min(idx[0])), i, 0))
-          if parts[i] ==0:
-             minorAxis = bunch_ratio*majorAxis
-             the1=[i for i in range(1,180)]
-             the2=[i for i in range(181,360)]
-             the1=np.append(the1,the2)
-             
-             for theta in the1:
-                 if muci != np.inf:
-                    tmp_radius =random.random()*(muci[1]-muci[0])+ muhat
-                 else:
-                    tmp_radius = muhat
-                 tmp_fill_berry = np.empty((4,1),dtype=np.uint8)
-                 tmp_fill_berry[0] = track_center[0] + (majorAxis - tmp_radius)*math.cos(theta/180*math.pi)
-                 tmp_fill_berry[2] = track_center[2] + (minorAxis - tmp_radius)*math.sin(theta/180*math.pi)
-                 tmp_fill_berry[1] = i
-                 tmp_fill_berry[3] = tmp_radius
-                 distance = ((tmp_fill_berry[0] - existing_berries[:, 0])**2+(tmp_fill_berry[1] - existing_berries[:, 1])**2+(tmp_fill_berry[2] - existing_berries[:, 2])**2)**0.5
-                 index1 = np.where((distance > 0)&(distance < (tmp_fill_berry[3] + existing_berries[:, 3] - tolerance)))
-                 tmpX = int(tmp_fill_berry[1])
-                 tmpY = int(tmp_fill_berry[0])
-                 index2 = checkPoints(tmpX,tmpY,tmp_radius,bw_bunch_s)
-                 if np.sum(index1)==0 and index2:
-                    tmp_fill_berry=tmp_fill_berry.reshape(1,4)
-                    existing_berries = np.append(existing_berries,tmp_fill_berry,axis=0)
-          track_radius = majorAxis
-          the1=[i for i in range(1,180)]
-          the2=[i for i in range(181,360)]
-          the1=np.append(the1,the2)
-          for theta in the1:
-              if muci != np.inf:
-                 tmp_radius =random.random()*(muci[1]-muci[0])+ muhat
-              else:
-                 tmp_radius = muhat
-              tmp_fill_berry = np.empty((4,1),dtype=np.uint8)
-              tmp_fill_berry[0] = track_center[0] + (track_radius - tmp_radius)*math.cos(theta/180*math.pi)
-              tmp_fill_berry[2] = track_center[2] + (track_radius - tmp_radius)*math.sin(theta/180*math.pi)
-              tmp_fill_berry[1] = i
-              tmp_fill_berry[3] = tmp_radius
-              distance = ((tmp_fill_berry[0] - existing_berries[:, 0])**2+(tmp_fill_berry[1] - existing_berries[:, 1])**2+(tmp_fill_berry[2] - existing_berries[:, 2])**2)*0.5
-              index1 = np.where((distance > 0)&(distance < (tmp_fill_berry[3] + existing_berries[:, 3] - tolerance)))
-              tmpX = int(tmp_fill_berry[1])
-              tmpY = int(tmp_fill_berry[0])
-              try:
-                 index2 = checkPoints(tmpX,tmpY,tmp_radius,bw_bunch_s)
-                 if np.sum(index1)==0 and index2:
-                    tmp_fill_berry=tmp_fill_berry.reshape(1,4)
-                    existing_berries = np.append(existing_berries,tmp_fill_berry,axis=0)
-              except:
-                    existing_berries = existing_berries
-       if subBunches.orientation > 0:
-          a = -(180-subBunches.orientation)*math.pi/180
-       else:
-          a = -(90-subBunches.orientation)*math.pi/180
-       ox = subBunches.position[1]
-       oy = subBunches.position[2]
-       M = cv2.moments(contours[0])
-       Cx = int(M['m10']/M['m00'])
-       Cy = int(M['m01']/M['m00'])
-       if np.sum(existing_berries)!=0:
-          x2 = (existing_berries[:,0] - Cx)*math.cos(a) - (existing_berries[:,1] - Cy)*math.sin(a) + Cx
-          y2 = (existing_berries[:,0] - Cx)*math.sin(a) + (existing_berries[:,1] - Cy)*math.cos(a) + Cy
-          existing_berries[:,0] = x2+ox
-          existing_berries[:,1] = y2+oy
-       if np.sum(newBerries_atEdge)!=0:
-          x2 = (newBerries_atEdge[:,0] - Cx)*math.cos(a) - (newBerries_atEdge[:,1] - Cy)*math.sin(a) + Cx
-          y2 = (newBerries_atEdge[:,0] - Cx)*math.sin(a) + (newBerries_atEdge[:,1] - Cy)*math.cos(a) + Cy
-          newBerries_atEdge[:,0] = x2+ox
-          newBerries_atEdge[:,1] = y2+oy
-       if np.sum(visibleBerries)!=0:
-          x2 = (visibleBerries[:,0] - Cx)*math.cos(a) - (visibleBerries[:,1] - Cy)*math.sin(a) + Cx
-          y2 = (visibleBerries[:,0] - Cx)*math.sin(a) + (visibleBerries[:,1] - Cy)*math.cos(a) + Cy
-          visibleBerries[:,0] = x2+ox
-          visibleBerries[:,1] = y2+oy
+                 candidates[i] = 0
+          index = np.where(candidates==0)
+          visibleBerries=np.delete(visibleBerries,index,0)
 
-    print(existing_berries)
-    #return existing_berries,newBerries_atEdge,visibleBerries
-get3DModel(subBunches[0],color)
+
+       contours,hierarch=cv2.findContours(mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+       parts = np.ones((mask.shape[0],1),dtype=np.uint8)
+       bunch_ratio = 5/6
+       x,y,w,h = cv2.boundingRect(contours[0])
+       thres = w/h*h+y
+       parts[1:int(thres)] = 0
+       if len(Vradii)==0:
+          existing_berries = newBerries_atEdge
+       else:
+          existing_berries = newBerries_atEdge
+          if np.sum(existing_berries)==0:
+             existing_berries=np.empty((0,4),dtype=np.uint8)
+          for i in range(visibleBerries.shape[0]):
+              center_x = visibleBerries[i, 0]
+              center_y = visibleBerries[i, 1]
+              mas = mask[int(center_y),:]
+              idx = np.where(mas==1)
+              majorAxis = (max(idx[0]) - min(idx[0]) + 1)/2
+              track_center = np.hstack((majorAxis+min(min(idx)), center_y, 0))
+              if parts[int(center_y)] == 0:
+                 minorAxis = bunch_ratio*majorAxis
+                 visibleBerries[i, 2] = (abs((1 - (center_x - track_center[0])**2/(majorAxis - visibleBerries[i,3])**2)*(minorAxis - visibleBerries[i,3])**2))**0.5+ track_center[2]
+              else:
+                 track_radius = majorAxis - visibleBerries[i,3]
+                 visibleBerries[i,2] = (abs(track_radius**2 - (center_x - track_center[0])**2))**0.5+track_center[2]
+              while 1:
+                 distance = ((visibleBerries[i,0] - existing_berries[:,0])**2+(visibleBerries[i,1] - existing_berries[:,1])**2+(visibleBerries[i, 2] - existing_berries[:,2])**2)**0.5
+                 index = np.where((distance > 0)&(distance < (visibleBerries[i, 3] + existing_berries[:, 3] - tolerance)))
+                 if np.sum(index)>0:
+                    visibleBerries[i, 2] = visibleBerries[i, 2] - step_move
+                    visibleBerries[i, 3] = visibleBerries[i, 3]
+                 elif np.sum(index) == 0:
+                    break
+              #visibleBerries[i, :] = visibleBerries[i, :].reshape(1,4)
+              #ex = np.append(ex,visibleBerries[i, :],axis = 0)
+              #ex = ex.reshape(-1,4)
+              existing_berries = np.vstack((existing_berries,visibleBerries[i, :]))
+       if np.sum(existing_berries)==0:
+          existing_berries =[]
+          newBerries_atEdge = []
+          visibleBerries =[]
+       else:
+          muhat = existing_berries[:, 3].mean()
+          sigmahat = existing_berries[:, 3].std(ddof=1)
+          muci = stats.norm.interval(0.95, loc=muhat, scale=sigmahat)
+          for i in range(int(y)+5,int(y+h)-5,2):
+              ma=mask[i,:]
+              idx = np.where(ma==1)
+              majorAxis = (max(idx[0]) - min(idx[0]) + 1)/2
+              track_center = np.hstack(((majorAxis+min(idx[0])), i, 0))
+              if parts[i] ==0:
+                 minorAxis = bunch_ratio*majorAxis
+                 the1=[i for i in range(1,180)]
+                 the2=[i for i in range(181,360)]
+                 the1=np.append(the1,the2)
+             
+                 for theta in the1:
+                    if muci != np.inf:
+                       tmp_radius =random.random()*(muci[1]-muci[0])+ muhat
+                    else:
+                       tmp_radius = muhat
+                    tmp_fill_berry = np.empty((4,1),dtype=np.uint8)
+                    tmp_fill_berry[0] = track_center[0] + (majorAxis - tmp_radius)*math.cos(theta/180*math.pi)
+                    tmp_fill_berry[2] = track_center[2] + (minorAxis - tmp_radius)*math.sin(theta/180*math.pi)
+                    tmp_fill_berry[1] = i
+                    tmp_fill_berry[3] = tmp_radius
+                    distance = ((tmp_fill_berry[0] - existing_berries[:, 0])**2+(tmp_fill_berry[1] - existing_berries[:, 1])**2+(tmp_fill_berry[2] - existing_berries[:, 2])**2)**0.5
+                    index1 = np.where((distance > 0)&(distance < (tmp_fill_berry[3] + existing_berries[:, 3] - tolerance)))
+                    tmpX = int(tmp_fill_berry[1])
+                    tmpY = int(tmp_fill_berry[0])
+                    index2 = checkPoints(tmpX,tmpY,tmp_radius,bw_bunch_s)
+                    if np.sum(index1)==0 and index2:
+                       tmp_fill_berry=tmp_fill_berry.reshape(1,4)
+                       existing_berries = np.append(existing_berries,tmp_fill_berry,axis=0)
+              else:
+                 track_radius = majorAxis
+                 the1=[i for i in range(1,180)]
+                 the2=[i for i in range(181,360)]
+                 the1=np.append(the1,the2)
+                 for theta in the1:
+                     if muci != np.inf:
+                        tmp_radius =random.random()*(muci[1]-muci[0])+ muhat
+                     else:
+                        tmp_radius = muhat
+                     tmp_fill_berry = np.empty((4,1),dtype=np.uint8)
+                     tmp_fill_berry[0] = track_center[0] + (track_radius - tmp_radius)*math.cos(theta/180*math.pi)
+                     tmp_fill_berry[2] = track_center[2] + (track_radius - tmp_radius)*math.sin(theta/180*math.pi)
+                     tmp_fill_berry[1] = i
+                     tmp_fill_berry[3] = tmp_radius
+                     distance = ((tmp_fill_berry[0] - existing_berries[:, 0])**2+(tmp_fill_berry[1] - existing_berries[:, 1])**2+(tmp_fill_berry[2] - existing_berries[:, 2])**2)*0.5
+                     index1 = np.where((distance > 0)&(distance < (tmp_fill_berry[3] + existing_berries[:, 3] - tolerance)))
+                     tmpX = int(tmp_fill_berry[1])
+                     tmpY = int(tmp_fill_berry[0])
+                     try:
+                        index2 = checkPoints(tmpX,tmpY,tmp_radius,bw_bunch_s)
+                        if np.sum(index1)==0 and index2:
+                           tmp_fill_berry=tmp_fill_berry.reshape(1,4)
+                           existing_berries = np.append(existing_berries,tmp_fill_berry,axis=0)
+                     except:
+                        existing_berries = existing_berries
+          if subBunches.orientation > 0:
+             a = -(180-subBunches.orientation)*math.pi/180
+          else:
+             a = -(90-subBunches.orientation)*math.pi/180
+          ox = subBunches.position[0]
+          oy = subBunches.position[1]
+          M = cv2.moments(contours[0])
+          Cx = int(M['m10']/M['m00'])
+          Cy = int(M['m01']/M['m00'])
+          if np.sum(existing_berries)!=0:
+             x2 = (existing_berries[:,0] - Cx)*math.cos(a) - (existing_berries[:,1] - Cy)*math.sin(a) + Cx
+             y2 = (existing_berries[:,0] - Cx)*math.sin(a) + (existing_berries[:,1] - Cy)*math.cos(a) + Cy
+             existing_berries[:,0] = x2+ox
+             existing_berries[:,1] = y2+oy
+          if np.sum(newBerries_atEdge)!=0:
+             x2 = (newBerries_atEdge[:,0] - Cx)*math.cos(a) - (newBerries_atEdge[:,1] - Cy)*math.sin(a) + Cx
+             y2 = (newBerries_atEdge[:,0] - Cx)*math.sin(a) + (newBerries_atEdge[:,1] - Cy)*math.cos(a) + Cy
+             newBerries_atEdge[:,0] = x2+ox
+             newBerries_atEdge[:,1] = y2+oy
+          if np.sum(visibleBerries)!=0:
+             x2 = (visibleBerries[:,0] - Cx)*math.cos(a) - (visibleBerries[:,1] - Cy)*math.sin(a) + Cx
+             y2 = (visibleBerries[:,0] - Cx)*math.sin(a) + (visibleBerries[:,1] - Cy)*math.cos(a) + Cy
+             visibleBerries[:,0] = x2+ox
+             visibleBerries[:,1] = y2+oy
+
+
+    return existing_berries,newBerries_atEdge,visibleBerries
+
