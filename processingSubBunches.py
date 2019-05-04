@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
-
+import get3DModel
+from get3DModel import get3DModel
 def getSparseFactor(mask,bw,color):
     ret, th = cv2.threshold(bw, 0, 255, cv2.THRESH_OTSU)
     threshLevel = ret
@@ -11,6 +12,7 @@ def getSparseFactor(mask,bw,color):
     else:
        print('wrong color!')
     sf = np.sum(bw_bunch_s)/np.sum(mask)
+    sf = sf/255
     return sf,bw_bunch_s
 def processingSubBunches(subBunches,color):
     for i in range(len(subBunches)):
@@ -26,8 +28,8 @@ def processingSubBunches(subBunches,color):
        sf,bw_bunch_s = getSparseFactor(subBunches[i].mask,bw,color)
        subBunches[i].sf = sf
        subBunches[i].bw_bunch_s = bw_bunch_s
-       existing_berries, newBerries_atEdge, visibleBerries = get3DModel(subBunches(i),color)
+       existing_berries, newBerries_atEdge, visibleBerries = get3DModel(subBunches[i],color)
        subBunches[i].existing_berries = existing_berries
        subBunches[i].newBerries_atEdge = newBerries_atEdge
        subBunches[i].visibleBerries = visibleBerries
-    return subBunches 
+       return subBunches 

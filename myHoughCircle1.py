@@ -3,7 +3,7 @@ import numpy as np
 
 def myHoughCircle1(image,iclose,rangeR,sensitivity,edgeThreshold):
   try:
-    circles1= cv2.HoughCircles(image,cv2.HOUGH_GRADIENT,1,int(sensitivity*min(rangeR)),param1=int(edgeThreshold),param2=7,minRadius=int(min(rangeR)),maxRadius=int(max(rangeR)))
+    circles1= cv2.HoughCircles(image,cv2.HOUGH_GRADIENT,1,int(2*min(rangeR)),param1=int(edgeThreshold),param2=7,minRadius=int(min(rangeR)),maxRadius=int(max(rangeR)))
     circles = np.single(np.around(circles1))
     cx = np.empty(0)
     cy = np.empty(0)
